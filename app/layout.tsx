@@ -10,15 +10,17 @@ const inter = Inter({
   display: 'swap'
 });
 
+
 export const metadata: Metadata = {
   title: 'WebTrends 2025 - Latest Web Development Trends',
   description: 'Discover the cutting-edge technologies and design patterns shaping the future of web development in 2025.',
+  manifest: '/manifest.json',
   keywords: 'web development, 2025 trends, Next.js, React, modern design, AI interfaces',
   openGraph: {
     title: 'WebTrends 2025',
     description: 'Explore the latest web development trends for 2025',
-    type: 'website',
   },
+
 };
 
 export default function RootLayout({
@@ -49,6 +51,23 @@ export default function RootLayout({
         {children}
         {/* Google Tag Manager inserted automatically */}
         <GoogleTagManager gtmId="GTM-KNZ293DS" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                      console.log('SW registered: ', registration);
+                    })
+                    .catch(function(registrationError) {
+                      console.log('SW registration failed: ', registrationError);
+                    });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
