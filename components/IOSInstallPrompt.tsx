@@ -21,31 +21,12 @@ export default function IOSInstallPrompt() {
     }
 
     return (
-        <div style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: '#0070f3',
-            color: 'white',
-            padding: '12px',
-            textAlign: 'center',
-            fontSize: '14px',
-            zIndex: 1000,
-        }}>
-            <p style={{ margin: 0 }}>
-                To install this app on your iPhone, tap the Share icon ⬆️ in Safari and then select "Add to Home Screen".
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 bg-white-900  backdrop-blur-sm border border-gray-300 rounded-lg shadow-lg p-4 max-w-md w-full z-50 text-center space-y-2">
+            <p style={{ margin: 0 }} className="text-gray-800">
+                Install this app on your iOS device: tap the share icon and then 'Add to Home Screen'.
             </p>
             <button
-                style={{
-                    marginLeft: '12px',
-                    backgroundColor: 'transparent',
-                    border: '1px solid white',
-                    color: 'white',
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                }}
+                className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white py-2 px-4 rounded"
                 onClick={() => setShowPrompt(false)}
                 aria-label="Dismiss install instruction"
             >

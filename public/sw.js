@@ -3,12 +3,13 @@ const OFFLINE_URL = '/offline';
 
 const STATIC_CACHE_URLS = [
     '/',
-    OFFLINE_URL,
+    '/offline',
     '/manifest.json',
     '/_next/static/css/app/layout.css',
     '/_next/static/chunks/webpack.js',
     '/about',
-    '/contact'
+    '/contact',
+    '/404'
 ];
 
 // Install event - cache essential resources
@@ -16,7 +17,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll(STATIC_CACHE_URLS).catch((error) => {
-                console.error('Failed to cache during install:', error);
+                console.log('Failed to cache during install:', error);
             });
         })
     );
@@ -63,7 +64,7 @@ self.addEventListener('fetch', (event) => {
                 .catch(() => {
                     // On fetch failure, fallback to cached page or offline page
                     return caches.match(event.request).then((cachedResponse) => {
-                        return cachedResponse || caches.match(OFFLINE_URL);
+                        return cachedResponse || caches.match('/offline');
                     });
                 })
         );
@@ -96,7 +97,7 @@ self.addEventListener('fetch', (event) => {
                 .catch(() => {
                     // For failed requests, fallback to offline page for documents
                     if (event.request.destination === 'document') {
-                        return caches.match(OFFLINE_URL);
+                        return caches.match('/offline');
                     }
                 });
         })
