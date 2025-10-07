@@ -5,19 +5,17 @@ const STATIC_CACHE_URLS = [
     '/',
     '/offline',
     '/manifest.json',
-    '/_next/static/css/app',
-    '/_next/static/chunks/',
+    '/_next/static/css/app/layout.css',
+    '_next/static/chunks/webpack.js',
+    '/about',
+    '/contact'
 ];
 
 // Install event - cache essential resources
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([
-                '/',
-                '/offline',
-                '/manifest.json'
-            ]).catch((error) => {
+            return cache.addAll(STATIC_CACHE_URLS).catch((error) => {
                 console.error('Failed to cache during install:', error);
             });
         })
@@ -51,9 +49,20 @@ self.addEventListener('fetch', (event) => {
     // Handle navigation requests
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            fetch(event.request).catch(() => {
-                return caches.match('/offline');
-            })
+            fetch(event.request)
+                .then((response) => {
+                    // Cache the page as user visits
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                    return response;
+                })
+                .catch(() => {
+                    return caches.match(event.request).then((cachedResponse) => {
+                        return cachedResponse || caches.match(OFFLINE_URL);
+                    });
+                })
         );
         return;
     }
@@ -82,7 +91,7 @@ self.addEventListener('fetch', (event) => {
             }).catch(() => {
                 // Return offline page for failed requests
                 if (event.request.destination === 'document') {
-                    return caches.match('/offline');
+                    return caches.match(OFFLINE_URL);
                 }
             });
         })
