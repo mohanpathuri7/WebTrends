@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { GoogleTagManager } from '@next/third-parties/google';
 import Script from 'next/script';  // import Script here
+import IOSInstallPrompt from '@/components/IOSInstallPrompt';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -68,6 +69,8 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* iOS Add to Home Screen prompt */}
+        <IOSInstallPrompt />
       </body>
     </html>
   );
