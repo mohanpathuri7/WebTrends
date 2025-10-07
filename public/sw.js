@@ -3,10 +3,10 @@ const OFFLINE_URL = '/offline';
 
 const STATIC_CACHE_URLS = [
     '/',
-    '/offline',
+    OFFLINE_URL,
     '/manifest.json',
     '/_next/static/css/app/layout.css',
-    '_next/static/chunks/webpack.js',
+    '/_next/static/chunks/webpack.js',
     '/about',
     '/contact'
 ];
@@ -20,6 +20,7 @@ self.addEventListener('install', (event) => {
             });
         })
     );
+    // Activate new service worker immediately
     self.skipWaiting();
 });
 
@@ -36,22 +37,23 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
+    // Take control of all clients immediately
     self.clients.claim();
 });
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
-    // Skip cross-origin requests
+    // Only handle same-origin requests (avoid CORS issues)
     if (!event.request.url.startsWith(self.location.origin)) {
         return;
     }
 
-    // Handle navigation requests
+    // Handle navigation requests with network first, fallback to cache
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
                 .then((response) => {
-                    // Cache the page as user visits
+                    // Cache a copy of the page visited (cache version control applied)
                     const responseClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseClone);
@@ -59,6 +61,7 @@ self.addEventListener('fetch', (event) => {
                     return response;
                 })
                 .catch(() => {
+                    // On fetch failure, fallback to cached page or offline page
                     return caches.match(event.request).then((cachedResponse) => {
                         return cachedResponse || caches.match(OFFLINE_URL);
                     });
@@ -67,38 +70,40 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Handle other requests with cache-first strategy
+    // Cache-first for other resource requests
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
                 return cachedResponse;
             }
 
-            return fetch(event.request).then((response) => {
-                // Don't cache non-successful responses
-                if (!response || response.status !== 200 || response.type !== 'basic') {
+            // Fetch from network and cache the response if successful
+            return fetch(event.request)
+                .then((response) => {
+                    // Only cache valid responses
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+
+                    const responseToCache = response.clone();
+
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+
                     return response;
-                }
-
-                // Clone the response
-                const responseToCache = response.clone();
-
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
+                })
+                .catch(() => {
+                    // For failed requests, fallback to offline page for documents
+                    if (event.request.destination === 'document') {
+                        return caches.match(OFFLINE_URL);
+                    }
                 });
-
-                return response;
-            }).catch(() => {
-                // Return offline page for failed requests
-                if (event.request.destination === 'document') {
-                    return caches.match(OFFLINE_URL);
-                }
-            });
         })
     );
 });
 
-// Background sync
+// Background sync event - limited iOS support, but included for completeness
 self.addEventListener('sync', (event) => {
     if (event.tag === 'background-sync') {
         event.waitUntil(doBackgroundSync());
@@ -106,11 +111,11 @@ self.addEventListener('sync', (event) => {
 });
 
 async function doBackgroundSync() {
-    // Implement background sync logic here
     console.log('Background sync triggered');
+    // Add custom logic here to retry failed requests or sync data
 }
 
-// Push notification
+// Push notification event
 self.addEventListener('push', (event) => {
     if (event.data) {
         const data = event.data.json();
@@ -119,7 +124,7 @@ self.addEventListener('push', (event) => {
             icon: '/icons/icon-192x192.png',
             badge: '/icons/icon-96x96.png',
             vibrate: [100, 50, 100],
-            data: data.data || {}
+            data: data.data || {},
         };
 
         event.waitUntil(
@@ -128,7 +133,7 @@ self.addEventListener('push', (event) => {
     }
 });
 
-// Notification click
+// Notification click event
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
